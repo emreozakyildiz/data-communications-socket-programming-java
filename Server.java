@@ -1,5 +1,10 @@
+import org.w3c.dom.ls.LSOutput;
+
 import java.io.*;
 import java.net.*;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 class Server {
 
@@ -15,17 +20,15 @@ class Server {
             while (true) {
                 //GELEN BAĞLANTIYI KABUL ETME
                 Socket connected = server.accept();
+                SimpleDateFormat formatter = new SimpleDateFormat("HH:mm:ss");
+                Date date = new Date();
 
-                System.out.println("New client connected " + connected.getRemoteSocketAddress().toString().replace((connected.getLocalAddress().toString()) + ":", "user-") + ".");
+                System.out.println("["+formatter.format(date)+"] "+connected.getRemoteSocketAddress().toString().replace((connected.getLocalAddress().toString()) + ":", "user-") + " connected.");
 
                 //CLIENT HANDLER
                 ClientHandler handler = new ClientHandler(connected);
                 //THREAD OLUŞTURMA
                 new Thread(handler).start();
-
-                if (connected.isClosed()) {
-                    System.out.println("Client " + connected.getRemoteSocketAddress().toString().replace(connected.getLocalAddress().toString(), "KULLANICI") + " disconnected.");
-                }
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -50,6 +53,7 @@ class ClientHandler implements Runnable {
     }
 
     public void run() {
+        String user = "Kullanıcı";
         PrintWriter sent = null;
         BufferedReader received = null;
         try {
@@ -57,14 +61,19 @@ class ClientHandler implements Runnable {
             sent = new PrintWriter(clientSocket.getOutputStream(), true);
             // INPUT STREAM
             received = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+            user = clientSocket.getRemoteSocketAddress().toString().replace((clientSocket.getLocalAddress().toString() + ":"), "user-");
             String message;
             while ((message = received.readLine()) != null) {
                 //CLIENT MESAJINI SERVER TARAFINDA GÖRÜNTÜLEME
-                System.out.println(clientSocket.getRemoteSocketAddress().toString().replace((clientSocket.getLocalAddress().toString() + ":"), "user-") + ":\n\t" + message);
+                SimpleDateFormat formatter = new SimpleDateFormat("HH:mm:ss");
+                Date date = new Date();
+                System.out.println("["+formatter.format(date)+"] " + user + ":\t" + message);
                 sent.println(message);
             }
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+            SimpleDateFormat formatter = new SimpleDateFormat("HH:mm:ss");
+            Date date = new Date();
+            System.out.println("["+formatter.format(date)+"] "+user + " disconnected.");
         } finally {
             try {
                 if (sent != null) {
