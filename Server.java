@@ -16,15 +16,15 @@ class Server {
                 //GELEN BAĞLANTIYI KABUL ETME
                 Socket client = server.accept();
 
-                System.out.println("New client connected " + client.getRemoteSocketAddress().toString().replace((client.getLocalAddress().toString())+":","user-")+".");
+                System.out.println("New client connected " + client.getRemoteSocketAddress().toString().replace((client.getLocalAddress().toString()) + ":", "user-") + ".");
 
                 //CLIENT HANDLER
                 ClientHandler clientSock = new ClientHandler(client);
                 //THREAD OLUŞTURMA
                 new Thread(clientSock).start();
 
-                if(client.isClosed()){
-                    System.out.println("Client "+client.getRemoteSocketAddress().toString().replace(client.getLocalAddress().toString(),"KULLANICI")+" disconnected.");
+                if (client.isClosed()) {
+                    System.out.println("Client " + client.getRemoteSocketAddress().toString().replace(client.getLocalAddress().toString(), "KULLANICI") + " disconnected.");
                 }
             }
         } catch (IOException e) {
@@ -39,44 +39,43 @@ class Server {
             }
         }
     }
+}
 
-    // ClientHandler class
-    private static class ClientHandler implements Runnable {
-        private final Socket clientSocket;
+// THREAD İŞLEMLERİ
+class ClientHandler implements Runnable {
+    private final Socket clientSocket;
 
-        // Constructor
-        public ClientHandler(Socket socket) {
-            this.clientSocket = socket;
-        }
+    public ClientHandler(Socket socket) {
+        this.clientSocket = socket;
+    }
 
-        public void run() {
-            PrintWriter out = null;
-            BufferedReader in = null;
+    public void run() {
+        PrintWriter out = null;
+        BufferedReader in = null;
+        try {
+            // OUT STREAM
+            out = new PrintWriter(clientSocket.getOutputStream(), true);
+            // INPUT STREAM
+            in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+            String line;
+            while ((line = in.readLine()) != null) {
+                //CLIENT MESAJINI SERVER TARAFINDA GÖRÜNTÜLEME
+                System.out.println(clientSocket.getRemoteSocketAddress().toString().replace((clientSocket.getLocalAddress().toString() + ":"), "user-") + ":\n\t" + line + "\n");
+                out.println(line);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
             try {
-                // get the outputstream of client
-                out = new PrintWriter(clientSocket.getOutputStream(), true);
-                // get the inputstream of client
-                in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-                String line;
-                while ((line = in.readLine()) != null) {
-                    //CLIENT MESAJINI SERVER TARAFINDA GÖRÜNTÜLEME
-                    System.out.printf(clientSocket.getRemoteSocketAddress().toString().replace((clientSocket.getLocalAddress().toString()+":"),"user-") + ":\n\t" + line + "\n");
-                    out.println(line);
+                if (out != null) {
+                    out.close();
+                }
+                if (in != null) {
+                    in.close();
+                    clientSocket.close();
                 }
             } catch (IOException e) {
                 e.printStackTrace();
-            } finally {
-                try {
-                    if (out != null) {
-                        out.close();
-                    }
-                    if (in != null) {
-                        in.close();
-                        clientSocket.close();
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
             }
         }
     }
